@@ -14,3 +14,8 @@ Open http://localhost:8080 and pay with test card `4242 4242 4242 4242`.
 
 See [PAYMENTS.md](PAYMENTS.md) for architecture, the payment flow, running
 without Docker, and the security checklist.
+
+## Deploy live
+
+[DEPLOY.md](DEPLOY.md) — one-click Render Blueprint ([render.yaml](render.yaml))
+for the API + static client, with MongoDB Atlas and the Stripe webhook.

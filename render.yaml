@@ -1,0 +1,50 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploys the Express API (Docker) and the React client (static site).
+# Create via Render Dashboard -> New -> Blueprint, pointed at this repo.
+
+services:
+  # ---------------------------------------------------------------------------
+  # API
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: bookflow-server
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Render injects PORT automatically; app.js reads process.env.PORT.
+      - key: CLIENT_URL
+        fromService:
+          type: web
+          name: bookflow-client
+          property: url
+      # Set these in the Render dashboard (marked secret / sync:false):
+      - key: MONGO_URI
+        sync: false            # MongoDB Atlas SRV connection string
+      - key: STRIPE_SECRET_KEY
+        sync: false            # sk_live_... or sk_test_...
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false            # whsec_... from the Stripe webhook endpoint
+
+  # ---------------------------------------------------------------------------
+  # Client (static)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: bookflow-client
+    runtime: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    autoDeploy: true
+    routes:
+      # Proxy API calls to the server so the browser stays same-origin (no CORS).
+      # NOTE: keep the server service named "bookflow-server" or update this host.
+      - type: rewrite
+        source: /api/*
+        destination: https://bookflow-server.onrender.com/api/:splat
+      # SPA fallback for react-router.
+      - type: rewrite
+        source: /*
+        destination: /index.html
