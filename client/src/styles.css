@@ -149,3 +149,45 @@ code {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.auth { display: grid; gap: 14px; }
+.auth h1 { margin-bottom: 0; }
+
+.auth label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.auth input {
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.auth input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #e2e8f0;
+  font-size: 13px;
+}

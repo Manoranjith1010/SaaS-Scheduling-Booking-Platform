@@ -1,18 +1,40 @@
 import { useEffect, useState } from "react";
-import { getCatalog, createBooking, createCheckoutSession } from "./api/checkout";
+import {
+  getCatalog,
+  createBooking,
+  createCheckoutSession,
+  me,
+  getToken,
+  clearToken,
+} from "./api/checkout";
+import AuthForm from "./components/AuthForm";
 
 const money = (cents, currency = "usd") =>
   new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
 
 export default function App() {
+  const [authState, setAuthState] = useState("loading"); // loading | out | in
+  const [user, setUser] = useState(null);
+
   const [catalog, setCatalog] = useState([]);
   const [selected, setSelected] = useState(null);
   const [status, setStatus] = useState("idle"); // idle | booking | redirecting
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getCatalog().then(setCatalog).catch((e) => setError(e.message));
+    if (!getToken()) return setAuthState("out");
+    me()
+      .then(({ user }) => {
+        setUser(user);
+        setAuthState("in");
+      })
+      .catch(() => setAuthState("out"));
   }, []);
+
+  useEffect(() => {
+    if (authState !== "in") return;
+    getCatalog().then(setCatalog).catch((e) => setError(e.message));
+  }, [authState]);
 
   async function handlePay() {
     if (!selected) return;
@@ -29,11 +51,47 @@ export default function App() {
     }
   }
 
+  function signOut() {
+    clearToken();
+    setUser(null);
+    setAuthState("out");
+  }
+
+  if (authState === "loading") {
+    return (
+      <div className="page">
+        <div className="result"><div className="spinner" /><p className="muted">Loading…</p></div>
+      </div>
+    );
+  }
+
+  if (authState === "out") {
+    return (
+      <div className="page">
+        <header className="header">
+          <span className="logo">◆ BookFlow</span>
+          <span className="badge">Test mode</span>
+        </header>
+        <main className="card">
+          <AuthForm
+            onAuthed={(u) => {
+              setUser(u);
+              setAuthState("in");
+            }}
+          />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
       <header className="header">
         <span className="logo">◆ BookFlow</span>
-        <span className="badge">Test mode</span>
+        <span className="user-chip">
+          {user?.email}
+          <button className="link-btn" onClick={signOut}>Sign out</button>
+        </span>
       </header>
 
       <main className="card">

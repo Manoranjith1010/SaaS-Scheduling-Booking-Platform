@@ -2,7 +2,9 @@ import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 
+import { CLIENT_URL } from "./lib/config.js";
 import stripeWebhook from "./routes/stripeWebhook.js";
+import authRoutes from "./routes/auth.js";
 import checkoutRoutes from "./routes/checkout.js";
 import orderRoutes from "./routes/orders.js";
 import bookingRoutes from "./routes/bookings.js";
@@ -15,15 +17,18 @@ app.use("/api/webhooks/stripe", stripeWebhook);
 // --- JSON parsing for everything else ---
 app.use(express.json());
 
-// (Optional) basic CORS for local dev with a separate frontend origin
+// --- CORS: allow the configured client origin (cross-origin API calls) ---
+const ALLOWED_ORIGIN = CLIENT_URL;
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", process.env.CLIENT_URL || "*");
-  res.header("Access-Control-Allow-Headers", "Content-Type, x-user-id, x-user-email");
+  res.header("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  res.header("Vary", "Origin");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);

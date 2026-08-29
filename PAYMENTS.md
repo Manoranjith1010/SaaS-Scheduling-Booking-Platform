@@ -12,11 +12,15 @@ docker-compose.yml             # mongo + server + client (+ optional stripe-cli)
 server/
   Dockerfile
   src/
-    app.js                     # webhook mounted before express.json()
+    app.js                     # webhook mounted before express.json(); CORS
     lib/stripe.js              # Stripe SDK singleton (secret key, server only)
-    middleware/auth.js         # PLACEHOLDER auth — replace before production
+    lib/jwt.js                 # sign / verify bearer tokens (JWT_SECRET)
+    lib/config.js              # resolves CLIENT_URL (or CLIENT_HOST on Render)
+    middleware/auth.js         # verifies Authorization: Bearer <jwt>
+    models/User.js             # email + bcrypt passwordHash
     models/Booking.js          # trusted price source (server-side catalog)
     models/Order.js            # pending | paid | failed | cancelled
+    routes/auth.js             # POST /register, /login ; GET /me
     routes/bookings.js         # catalog + create booking
     routes/checkout.js         # POST /api/checkout/session
     routes/orders.js           # GET  /api/orders/:id  (status polling)
@@ -100,5 +104,8 @@ cd client && npm install && npm run dev            # http://localhost:5173
 | Raw body for signature | webhook mounted before `express.json()` |
 | Auth | `requireAuth` on booking/checkout; bookings scoped to the user |
 
-`server/src/middleware/auth.js` is a development stub (reads `x-user-id`). Wire
-in real authentication (JWT/session/Clerk/Auth0) before going live.
+Auth: email + password, bcrypt-hashed (cost 12), JWT bearer tokens signed with
+`JWT_SECRET` (7-day expiry). `requireAuth` verifies the token and sets
+`req.user`. Bookings, checkout and orders are all scoped to `req.user.id`. See
+the production checklist in [DEPLOY.md](DEPLOY.md) for hardening still to do
+(email verification, rate limiting, httpOnly-cookie sessions).

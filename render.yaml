@@ -16,18 +16,20 @@ services:
     autoDeploy: true
     envVars:
       # Render injects PORT automatically; app.js reads process.env.PORT.
-      - key: CLIENT_URL
+      - key: CLIENT_HOST
         fromService:
           type: web
           name: bookflow-client
-          property: url
+          property: host
+      - key: JWT_SECRET
+        generateValue: true     # Render generates + stores a strong secret
       # Set these in the Render dashboard (marked secret / sync:false):
       - key: MONGO_URI
-        sync: false            # MongoDB Atlas SRV connection string
+        sync: false             # MongoDB Atlas SRV connection string
       - key: STRIPE_SECRET_KEY
-        sync: false            # sk_live_... or sk_test_...
+        sync: false             # sk_live_... or sk_test_...
       - key: STRIPE_WEBHOOK_SECRET
-        sync: false            # whsec_... from the Stripe webhook endpoint
+        sync: false             # whsec_... from the Stripe webhook endpoint
 
   # ---------------------------------------------------------------------------
   # Client (static)
@@ -35,15 +37,19 @@ services:
   - type: web
     name: bookflow-client
     runtime: static
-    buildCommand: cd client && npm install && npm run build
+    # VITE_API_BASE is baked into the bundle at build time from the API service's
+    # host, so renaming/moving the server can't break the link. The client calls
+    # that origin directly; the server allows it via CORS (CLIENT_HOST).
+    buildCommand: cd client && npm install && VITE_API_BASE="https://$API_HOST" npm run build
     staticPublishPath: ./client/dist
     autoDeploy: true
+    envVars:
+      - key: API_HOST
+        fromService:
+          type: web
+          name: bookflow-server
+          property: host
     routes:
-      # Proxy API calls to the server so the browser stays same-origin (no CORS).
-      # NOTE: keep the server service named "bookflow-server" or update this host.
-      - type: rewrite
-        source: /api/*
-        destination: https://bookflow-server.onrender.com/api/:splat
       # SPA fallback for react-router.
       - type: rewrite
         source: /*

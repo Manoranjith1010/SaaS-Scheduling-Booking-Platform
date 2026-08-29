@@ -16,6 +16,7 @@ services:
       PORT: 4000
       MONGO_URI: mongodb://mongo:27017/booking
       CLIENT_URL: ${CLIENT_URL:-http://localhost:8080}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
     ports:

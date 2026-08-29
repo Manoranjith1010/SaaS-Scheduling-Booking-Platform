@@ -1,20 +1,22 @@
+import { verifyToken } from "../lib/jwt.js";
+
 /**
- * Placeholder auth middleware.
- *
- * Replace this with your real authentication (JWT verification, session lookup,
- * Passport, Clerk/Auth0, etc.). It must populate `req.user` with at least
- * `{ id, email }` for a trusted, logged-in user.
- *
- * For local development it accepts `x-user-id` / `x-user-email` headers.
+ * Verifies a Bearer JWT issued by /api/auth/login or /api/auth/register and
+ * populates `req.user` with `{ id, email }`.
  */
 export function requireAuth(req, res, next) {
-  const id = req.header("x-user-id");
-  const email = req.header("x-user-email");
+  const header = req.header("authorization") || "";
+  const [scheme, token] = header.split(" ");
 
-  if (!id) {
+  if (scheme !== "Bearer" || !token) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
-  req.user = { id, email };
-  next();
+  try {
+    const payload = verifyToken(token);
+    req.user = { id: payload.sub, email: payload.email };
+    next();
+  } catch {
+    return res.status(401).json({ error: "Invalid or expired session" });
+  }
 }

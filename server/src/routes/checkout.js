@@ -1,5 +1,6 @@
 import express from "express";
 import { stripe } from "../lib/stripe.js";
+import { CLIENT_URL } from "../lib/config.js";
 import Order from "../models/Order.js";
 import Booking from "../models/Booking.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -53,8 +54,8 @@ router.post("/session", requireAuth, async (req, res) => {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.CLIENT_URL}/checkout/success?order=${order._id}`,
-      cancel_url: `${process.env.CLIENT_URL}/checkout/cancel?order=${order._id}`,
+      success_url: `${CLIENT_URL}/checkout/success?order=${order._id}`,
+      cancel_url: `${CLIENT_URL}/checkout/cancel?order=${order._id}`,
       metadata: {
         orderId: order._id.toString(),
         bookingId: booking._id.toString(),

@@ -7,12 +7,6 @@ import App from "./App";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
 
-// Ensure a demo user id exists so the placeholder auth works.
-if (!localStorage.getItem("userId")) {
-  localStorage.setItem("userId", crypto.randomUUID());
-  localStorage.setItem("userEmail", "demo@example.com");
-}
-
 const router = createBrowserRouter([
   { path: "/", element: <App /> },
   { path: "/checkout/success", element: <CheckoutSuccess /> },
