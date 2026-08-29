@@ -1,0 +1,45 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      PORT: 4000
+      MONGO_URI: mongodb://mongo:27017/booking
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:8080}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    ports:
+      - "4000:4000"
+
+  client:
+    build: ./client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8080:80"
+
+  # Forwards live Stripe events to the server's webhook. Optional but needed
+  # for payments to be confirmed. Requires STRIPE_SECRET_KEY in .env.
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    depends_on:
+      - server
+    command: >
+      listen
+      --api-key ${STRIPE_SECRET_KEY}
+      --forward-to http://server:4000/api/webhooks/stripe
+    profiles: ["webhooks"]
+
+volumes:
+  mongo_data:
